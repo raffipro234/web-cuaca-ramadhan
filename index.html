@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Imajinatif Weather - Data Akurat Ramadhan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        
+        * { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        body { transition: background 1.5s ease; min-height: 100vh; margin: 0; overflow-x: hidden; }
+
+        /* Tema Cerah Sesuai Waktu */
+        .theme-subuh { background: #14b8a6; } /* Toska Akurat */
+        .theme-pagi { background: #38bdf8; }  /* Biru Langit */
+        .theme-siang { background: #0284c7; } /* Biru Cerah */
+        .theme-sore { background: #f59e0b; }  /* Oranye Emas */
+        .theme-malam { background: #0f172a; } /* Navy Gelap */
+
+        /* iPhone Card - Solid (Bukan Transparan) */
+        .ios-card {
+            background: #ffffff;
+            border-radius: 35px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            color: #1e293b;
+            border: 1px solid #e2e8f0;
+        }
+
+        .banner-item {
+            min-width: 150px;
+            background: #ffffff;
+            border: 2px solid #f1f5f9;
+            border-radius: 28px;
+            padding: 20px;
+            margin-right: 15px;
+            text-align: center;
+            box-shadow: 0 10px 15px rgba(0,0,0,0.05);
+        }
+
+        .profile-frame {
+            width: 130px; height: 130px;
+            border-radius: 45px; /* Squircle iOS */
+            border: 5px solid white;
+            object-fit: cover;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+        }
+
+        .btn-enter {
+            background: white;
+            color: #1e293b;
+            padding: 20px 60px;
+            border-radius: 25px;
+            font-weight: 800;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+
+        .btn-enter:active { transform: scale(0.95); }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        
+        .status-badge {
+            background: #f1f5f9;
+            padding: 4px 12px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 800;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body class="theme-pagi flex items-center justify-center p-4">
+
+    <div id="welcome-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center text-center p-6">
+        <div class="mb-8">
+            <img src="https://l.top4top.io/p_3703w01fh1.jpg" alt="Profile" class="profile-frame mx-auto mb-6">
+            <h1 class="text-6xl font-extrabold italic text-white mb-2">Web Cuaca</h1>
+            <p class="text-white/80 font-bold tracking-[4px] text-xs uppercase mb-12">Ramadhan Data Center</p>
+            <button onclick="startApp()" class="btn-enter">
+                MASUK <i class="fas fa-mosque ml-2 text-teal-600"></i>
+            </button>
+        </div>
+    </div>
+
+    <div id="main-app" class="hidden w-full max-w-md py-4">
+        
+        <div class="flex gap-2 mb-6">
+            <div class="relative flex-1">
+                <i class="fas fa-location-dot absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                <input type="text" id="cityInput" placeholder="Cari Nama Kota/Desa..." 
+                    class="w-full bg-white border-none rounded-3xl pl-12 pr-4 py-5 font-bold text-slate-800 shadow-xl outline-none focus:ring-2 focus:ring-teal-500">
+            </div>
+            <button onclick="fetchRealData()" class="bg-white text-teal-600 w-16 rounded-3xl shadow-xl active:scale-90 transition">
+                <i class="fas fa-search text-xl"></i>
+            </button>
+        </div>
+
+        <div class="ios-card p-8 text-center mb-6 relative overflow-hidden">
+            <div class="absolute top-0 right-0 p-4 opacity-10 text-8xl text-teal-900"><i class="fas fa-ketupat"></i></div>
+            
+            <p id="dateDisplay" class="text-[10px] font-black text-teal-600 uppercase tracking-[0.2em] mb-4">---</p>
+            <h2 id="cityName" class="text-3xl font-black text-slate-800 mb-8 tracking-tighter">Pilih Lokasi Kamu</h2>
+            
+            <div id="mainWeatherIcon" class="text-9xl mb-8 text-amber-400 drop-shadow-md">
+                <i class="fas fa-cloud-sun"></i>
+            </div>
+            
+            <div class="mb-4">
+                <h1 id="currentTemp" class="text-9xl font-extrabold tracking-tighter text-slate-800">--°</h1>
+                <p id="currentDesc" class="text-xl font-bold text-slate-400 uppercase tracking-widest mt-2">Menunggu Data...</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mb-8">
+            <div class="ios-card p-6 text-center border-b-4 border-teal-500">
+                <p class="text-[10px] font-bold text-teal-600 uppercase mb-2">Imsak (Real-Time)</p>
+                <p id="imsakTime" class="text-3xl font-black">--:--</p>
+            </div>
+            <div class="ios-card p-6 text-center border-b-4 border-amber-500">
+                <p class="text-[10px] font-bold text-amber-600 uppercase mb-2">Buka / Maghrib</p>
+                <p id="maghribTime" class="text-3xl font-black">--:--</p>
+            </div>
+        </div>
+
+        <div class="flex justify-between items-center px-4 mb-4">
+            <h3 class="font-black text-white text-[11px] uppercase tracking-widest">Ramalan 7 Hari (Real Data)</h3>
+            <span class="status-badge bg-white/20 text-white">SWIPE <i class="fas fa-arrow-right"></i></span>
+        </div>
+        
+        <div id="forecastContainer" class="flex overflow-x-auto no-scrollbar pb-6 px-2">
+            <p class="text-white/60 italic text-sm py-10">Cari kota untuk melihat ramalan akurat...</p>
+        </div>
+
+        <div class="text-center mt-6 pb-12">
+            <p class="text-[10px] text-white/50 uppercase tracking-[0.5em] mb-2 font-bold">Created By</p>
+            <a href="https://t.me/Raffioffci2" target="_blank" class="text-2xl font-black text-white italic drop-shadow-lg">@Raffioffci2</a>
+        </div>
+    </div>
+
+    <script>
+        // Data Kamus Cuaca WMO Asli (Bukan Karangan)
+        const weatherMap = {
+            0: { label: "Cerah", icon: "fa-sun" },
+            1: { label: "Cerah Berawan", icon: "fa-cloud-sun" },
+            2: { label: "Berawan", icon: "fa-cloud" },
+            3: { label: "Mendung", icon: "fa-cloud-meatball" },
+            45: { label: "Berkabut", icon: "fa-smog" },
+            51: { label: "Gerimis", icon: "fa-cloud-rain" },
+            61: { label: "Hujan Ringan", icon: "fa-cloud-showers-heavy" },
+            80: { label: "Hujan Deras", icon: "fa-cloud-showers-water" },
+            95: { label: "Badai Petir", icon: "fa-bolt" }
+        };
+
+        function startApp() {
+            document.getElementById('welcome-screen').style.display = 'none';
+            document.getElementById('main-app').classList.remove('hidden');
+            updateTheme();
+        }
+
+        function updateTheme() {
+            const hour = new Date().getHours();
+            const b = document.body;
+            b.className = "flex items-center justify-center p-4";
+            if(hour >= 4 && hour < 6) b.classList.add('theme-subuh');
+            else if(hour >= 6 && hour < 11) b.classList.add('theme-pagi');
+            else if(hour >= 11 && hour < 15) b.classList.add('theme-siang');
+            else if(hour >= 15 && hour < 18) b.classList.add('theme-sore');
+            else b.classList.add('theme-malam');
+        }
+
+        async function fetchRealData() {
+            const query = document.getElementById('cityInput').value;
+            if(!query) return;
+
+            try {
+                // 1. Ambil Koordinat Asli
+                const geo = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${query}&count=1&language=id&format=json`);
+                const gData = await geo.json();
+                if(!gData.results) return alert("Kota/Daerah Tidak Ditemukan!");
+                const { latitude, longitude, name } = gData.results[0];
+
+                // 2. Ambil Cuaca Asli Satelit
+                const weather = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto`);
+                const wData = await weather.json();
+
+                // 3. Ambil Jadwal Ramadhan Asli
+                const prayer = await fetch(`https://api.aladhan.com/v1/timingsByAddress?address=${query}`);
+                const pData = await prayer.json();
+
+                renderUI(wData, pData.data.timings, name);
+            } catch (err) {
+                alert("Gagal memuat data real-time!");
+            }
+        }
+
+        function renderUI(w, p, name) {
+            const cur = w.current_weather;
+            const daily = w.daily;
+            const info = weatherMap[cur.weathercode] || { label: "Berawan", icon: "fa-cloud" };
+
+            document.getElementById('cityName').innerText = name;
+            document.getElementById('dateDisplay').innerText = new Date().toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+            document.getElementById('currentTemp').innerText = Math.round(cur.temperature) + "°";
+            document.getElementById('currentDesc').innerText = info.label;
+            document.getElementById('mainWeatherIcon').innerHTML = `<i class="fas ${info.icon}"></i>`;
+            document.getElementById('imsakTime').innerText = p.Imsak;
+            document.getElementById('maghribTime').innerText = p.Maghrib;
+
+            const container = document.getElementById('forecastContainer');
+            container.innerHTML = "";
+            for(let i = 1; i < 7; i++) {
+                const dayDate = new Date(daily.time[i]);
+                const dayName = dayDate.toLocaleDateString('id-ID', {weekday: 'short'});
+                const dayInfo = weatherMap[daily.weathercode[i]] || { label: "Berawan", icon: "fa-cloud" };
+
+                container.innerHTML += `
+                    <div class="banner-item">
+                        <p class="text-[10px] font-black opacity-40 mb-3">${dayName}, ${dayDate.getDate()}/${dayDate.getMonth()+1}</p>
+                        <i class="fas ${dayInfo.icon} text-4xl mb-4 text-teal-500"></i>
+                        <p class="text-2xl font-black text-slate-800">${Math.round(daily.temperature_2m_max[i])}°</p>
+                        <p class="text-[9px] font-bold text-teal-600 uppercase mt-1">${dayInfo.label}</p>
+                        <div class="status-badge mt-3">AKURAT</div>
+                    </div>
+                `;
+            }
+        }
+
+        updateTheme();
+    </script>
+</body>
+</html>
